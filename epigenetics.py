@@ -1,10 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
 import numpy as np
 
 # Load the data
@@ -34,14 +31,12 @@ nutri_data['Population'] = pd.to_numeric(nutri_data['Population'], errors='coerc
 
 print(nutri_data.columns)
 
-
 # Drop rows with missing values in critical columns for the analysis
 iq_data_clean = iq_data.dropna(subset=['Average IQ', 'Population - 2023', 'HDI (2021)', 'Mean years of schooling - 2021', 'GNI - 2021'])
 print(iq_data_clean.columns)
 
 nutri_data_clean = nutri_data.dropna(subset=['Cereals - Excluding Beer', 'Eggs', 'Fish, Seafood', 'Meat', 'Milk - Excluding Butter', 'Offals', 'Vegetal Products', 'Obesity', 'Undernourished'])
 print(nutri_data_clean.columns)
-
 
 # Calculate quartiles
 quartiles = iq_data_clean['Average IQ'].quantile([0.25, 0.5, 0.75])
@@ -85,6 +80,9 @@ correlation_coefficient = np.sqrt(r_squared)
 print(f"Correlation coefficient (r) for IQ vs Population: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for IQ vs Population: {r_squared}")
 
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
 plt.legend(title='IQ Quartile')
 plt.show()
 
@@ -99,7 +97,6 @@ plt.ylabel('Average IQ')
 for i, row in iq_data_clean.iterrows():
     plt.text(row['HDI (2021)'], row['Average IQ'], row['Country'], fontsize=8, alpha=0.75)
 
-
 # Fit linear model
 X = iq_data_clean[['HDI (2021)']]
 y = iq_data_clean['Average IQ']
@@ -108,6 +105,9 @@ r_squared = model.score(X, y)
 correlation_coefficient = np.sqrt(r_squared)
 print(f"Correlation coefficient (r) for IQ vs HDI: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for IQ vs HDI: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
 plt.legend(title='IQ Quartile')
 plt.show()
@@ -118,7 +118,7 @@ sns.scatterplot(data=iq_data_clean, x='GNI - 2021', y='Average IQ', hue='IQ Quar
 plt.title('Average IQ vs GNI - 2021')
 plt.xlabel('GNI (2021)')
 plt.ylabel('Average IQ')
-plt.xscale('log')  # Optional: Use log scale if population range is large
+plt.xscale('log')  # Optional: Use log scale if GNI range is large
 
 # Label each point with the country name
 for i, row in iq_data_clean.iterrows():
@@ -132,6 +132,9 @@ r_squared = model.score(X, y)
 correlation_coefficient = np.sqrt(r_squared)
 print(f"Correlation coefficient (r) for IQ vs GNI: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for IQ vs GNI: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
 plt.legend(title='IQ Quartile')
 plt.show()
@@ -148,41 +151,20 @@ plt.xscale('log')  # Optional: Use log scale if range of schooling years is larg
 for i, row in iq_data_clean.iterrows():
     plt.text(row['Mean years of schooling - 2021'], row['Average IQ'], row['Country'], fontsize=8, alpha=0.75)
 
-# Fit quadratic model
+# Fit linear model
 X = iq_data_clean[['Mean years of schooling - 2021']]
 y = iq_data_clean['Average IQ']
-
-# Using PolynomialFeatures to transform input features
-degree = 2  # Degree of the polynomial
-poly_features = PolynomialFeatures(degree=degree)
-X_poly = poly_features.fit_transform(X)
-
-# Create a pipeline with PolynomialFeatures and LinearRegression
-model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-model.fit(X, y)
-
-# Predict using the model to plot the curve
-X_plot = np.linspace(X.min(), X.max(), 100)[:, np.newaxis]
-y_plot = model.predict(X_plot.reshape(-1, 1))
-
-# Flatten X_plot and y_plot to 1-dimensional arrays
-X_plot = X_plot.flatten()
-y_plot = y_plot.flatten()
-
-# Plot the quadratic curve
-plt.plot(X_plot, y_plot, color='red', label=f'Quadratic Fit (Degree {degree})')
-
-# Calculate R^2 for the quadratic model
+model = LinearRegression().fit(X, y)
 r_squared = model.score(X, y)
 correlation_coefficient = np.sqrt(r_squared)
-print(f"Correlation coefficient (r) for IQ vs Mean Years of Schooling (Quadratic): {correlation_coefficient}")
-print(f"Coefficient of determination (r^2) for IQ vs Mean Years of Schooling (Quadratic): {r_squared}")
+print(f"Correlation coefficient (r) for IQ vs Mean Years of Schooling: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for IQ vs Mean Years of Schooling: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
 plt.legend(title='IQ Quartile')
 plt.show()
-
-
-
 
 # Convert '<2.5' to a numeric value, e.g., 2.0
 nutri_data_clean['Undernourished'] = nutri_data_clean['Undernourished'].apply(lambda x: 2.0 if x == '<2.5' else float(x))
@@ -208,9 +190,10 @@ correlation_coefficient = model.coef_[0]
 print(f"Coefficient (slope) for Milk - Excluding Butter vs. Undernourished: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for Milk - Excluding Butter vs. Undernourished: {r_squared}")
 
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
 plt.show()
-
-
 
 # Calculate ratios for obesity/malnourished
 nutri_data_clean['Obesity_Malnourished_Ratio'] = nutri_data_clean['Obesity'] / nutri_data_clean['Undernourished']
@@ -239,6 +222,9 @@ correlation_coefficient = model.coef_[0]
 print(f"Coefficient (slope) for Milk - Excluding Butter vs. Obesity/Malnourished Ratio: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for Milk - Excluding Butter vs. Obesity/Malnourished Ratio: {r_squared}")
 
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
 plt.show()
 
 # Scatter plot of Combined_Protein vs. Obesity_Malnourished_Ratio
@@ -260,5 +246,8 @@ r_squared = model.score(X, y)
 correlation_coefficient = model.coef_[0]
 print(f"Coefficient (slope) for Combined Protein vs. Obesity/Malnourished Ratio: {correlation_coefficient}")
 print(f"Coefficient of determination (r^2) for Combined Protein vs. Obesity/Malnourished Ratio: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
 plt.show()
