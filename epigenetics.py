@@ -210,3 +210,55 @@ print(f"Coefficient of determination (r^2) for Milk - Excluding Butter vs. Under
 
 plt.show()
 
+
+
+# Calculate ratios for obesity/malnourished
+nutri_data_clean['Obesity_Malnourished_Ratio'] = nutri_data_clean['Obesity'] / nutri_data_clean['Undernourished']
+
+# Create a new variable combining meat, eggs, and milk
+nutri_data_clean['Combined_Protein'] = nutri_data_clean['Meat'] + nutri_data_clean['Eggs'] + nutri_data_clean['Milk - Excluding Butter']
+
+# Scatter plot of Milk - Excluding Butter vs. Obesity_Malnourished_Ratio
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=nutri_data_clean, x='Milk - Excluding Butter', y='Obesity_Malnourished_Ratio', palette='viridis')
+plt.title('Milk - Excluding Butter vs. Obesity/Malnourished Ratio')
+plt.xlabel('Milk - Excluding Butter')
+plt.ylabel('Obesity/Malnourished Ratio')
+plt.xscale('log')  # Optional: Use log scale if range of milk consumption is large
+
+# Label each point with the country name
+for i, row in nutri_data_clean.iterrows():
+    plt.text(row['Milk - Excluding Butter'], row['Obesity_Malnourished_Ratio'], row['Country'], fontsize=8, alpha=0.75)
+
+# Fit linear model
+X = nutri_data_clean[['Milk - Excluding Butter']]
+y = nutri_data_clean['Obesity_Malnourished_Ratio']
+model = LinearRegression().fit(X, y)
+r_squared = model.score(X, y)
+correlation_coefficient = model.coef_[0]
+print(f"Coefficient (slope) for Milk - Excluding Butter vs. Obesity/Malnourished Ratio: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for Milk - Excluding Butter vs. Obesity/Malnourished Ratio: {r_squared}")
+
+plt.show()
+
+# Scatter plot of Combined_Protein vs. Obesity_Malnourished_Ratio
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=nutri_data_clean, x='Combined_Protein', y='Obesity_Malnourished_Ratio', palette='viridis')
+plt.title('Combined Protein vs. Obesity/Malnourished Ratio')
+plt.xlabel('Combined Protein (Meat + Eggs + Milk)')
+plt.ylabel('Obesity/Malnourished Ratio')
+
+# Label each point with the country name
+for i, row in nutri_data_clean.iterrows():
+    plt.text(row['Combined_Protein'], row['Obesity_Malnourished_Ratio'], row['Country'], fontsize=8, alpha=0.75)
+
+# Fit linear model
+X = nutri_data_clean[['Combined_Protein']]
+y = nutri_data_clean['Obesity_Malnourished_Ratio']
+model = LinearRegression().fit(X, y)
+r_squared = model.score(X, y)
+correlation_coefficient = model.coef_[0]
+print(f"Coefficient (slope) for Combined Protein vs. Obesity/Malnourished Ratio: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for Combined Protein vs. Obesity/Malnourished Ratio: {r_squared}")
+
+plt.show()
