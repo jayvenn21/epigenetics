@@ -7,12 +7,19 @@ import numpy as np
 # Load the data
 iq_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(8)/avgIQpercountry.csv'
 nutri_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(10)/Protein_Supply_Quantity_Data.csv'
+risk_factors_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/number-of-deaths-by-risk-factor.csv'
+height_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/annual-change-in-average-male-height.csv'
+
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
+risk_factors_data = pd.read_csv(risk_factors_path)
+height_data = pd.read_csv(height_data_path)
 
 # Display the first few rows of the data
 print(iq_data.head())
 print(nutri_data.head())
+print(risk_factors_data.head())
+print(height_data.head())
 
 # Check for missing values in iq_data and nutri_data
 print("Missing values in iq_data per column:")
@@ -20,6 +27,13 @@ print(iq_data.isna().sum())
 
 print("Missing values in nutri_data per column:")
 print(nutri_data.isna().sum())
+
+print("Missing values in risk_factors_data per column:")
+print(risk_factors_data.isna().sum())
+
+# Check for missing values in the height data
+print("Missing values in height_data per column:")
+print(height_data.isna().sum())
 
 # Ensure 'Population - 2023' is numeric
 iq_data['Population - 2023'] = pd.to_numeric(iq_data['Population - 2023'], errors='coerce')
@@ -250,4 +264,88 @@ print(f"Coefficient of determination (r^2) for Combined Protein vs. Obesity/Maln
 # Display r and r^2 on the plot
 plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
+plt.show()
+
+
+# Extract data for India and specific columns of interest
+india_data = risk_factors_data[(risk_factors_data['Entity'] == 'India') & (risk_factors_data['Year'] >= 1990) & (risk_factors_data['Year'] <= 2017)]
+columns_of_interest = ['Year', 'Iron deficiency', 'Low bone mineral density']
+india_data = india_data[columns_of_interest]
+
+# Plotting the bar graph for Iron deficiency
+plt.figure(figsize=(12, 8))
+sns.barplot(data=india_data, x='Year', y='Iron deficiency', color='red')
+plt.title('Iron Deficiency in India (1990 - 2017)')
+plt.xlabel('Year')
+plt.ylabel('Number of Deaths due to Iron Deficiency')
+plt.show()
+
+# Scatter plot for the correlation between Iron deficiency and Low bone mineral density
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=india_data, x='Iron deficiency', y='Low bone mineral density')
+plt.title('Correlation between Iron Deficiency and Low Bone Mineral Density in India')
+plt.xlabel('Number of Deaths due to Iron Deficiency')
+plt.ylabel('Number of Deaths due to Low Bone Mineral Density')
+
+# Fit linear model
+X = india_data[['Iron deficiency']]
+y = india_data['Low bone mineral density']
+model = LinearRegression().fit(X, y)
+r_squared = model.score(X, y)
+correlation_coefficient = np.sqrt(r_squared)
+print(f"Correlation coefficient (r) for Iron Deficiency vs Low Bone Mineral Density: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for Iron Deficiency vs Low Bone Mineral Density: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
+plt.show()
+
+
+# Analysis on Mean Male and Female Height
+
+# Bar plot for Mean Male Height (cm) in 1996
+plt.figure(figsize=(14, 10))
+height_1996 = height_data[height_data['Year'] == 1996]
+height_1996_sorted_male = height_1996.sort_values(by='Mean male height (cm)')
+sns.barplot(data=height_1996_sorted_male, x='Entity', y='Mean male height (cm)', palette='viridis')
+plt.title('Mean Male Height (cm) in 1996')
+plt.xlabel('Country')
+plt.ylabel('Mean Male Height (cm)')
+plt.xticks(rotation=90, ha='right')
+plt.show()
+
+# Bar plot for Mean Female Height (cm) in 1996
+plt.figure(figsize=(14, 10))
+height_1996_sorted_female = height_1996.sort_values(by='Mean female height (cm)')
+sns.barplot(data=height_1996_sorted_female, x='Entity', y='Mean female height (cm)', palette='viridis')
+plt.title('Mean Female Height (cm) in 1996')
+plt.xlabel('Country')
+plt.ylabel('Mean Female Height (cm)')
+plt.xticks(rotation=90, ha='right')
+plt.show()
+
+# Ensure each country has enough space in the text
+plt.yticks(rotation=0, ha='right')
+plt.show()
+
+# Filter the height data for India from 1896 to 1996
+height_india = height_data[(height_data['Entity'] == 'India') & (height_data['Year'] >= 1896) & (height_data['Year'] <= 1996)]
+
+# Bar plot for Mean Male Height (cm) in India from 1896 to 1996
+plt.figure(figsize=(12, 8))
+sns.barplot(data=height_india, x='Year', y='Mean male height (cm)', palette='viridis')
+plt.title('Mean Male Height (cm) in India (1896-1996)')
+plt.xlabel('Year')
+plt.ylabel('Mean Male Height (cm)')
+plt.xticks(rotation=90)
+plt.show()
+
+# Bar plot for Mean Female Height (cm) in India from 1896 to 1996
+plt.figure(figsize=(12, 8))
+sns.barplot(data=height_india, x='Year', y='Mean female height (cm)', palette='viridis')
+plt.title('Mean Female Height (cm) in India (1896-1996)')
+plt.xlabel('Year')
+plt.ylabel('Mean Female Height (cm)')
+plt.xticks(rotation=90)
 plt.show()
