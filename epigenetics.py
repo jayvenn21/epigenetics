@@ -9,17 +9,20 @@ iq_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(8)/av
 nutri_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(10)/Protein_Supply_Quantity_Data.csv'
 risk_factors_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/number-of-deaths-by-risk-factor.csv'
 height_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/annual-change-in-average-male-height.csv'
+life_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Life Expectancy Data.csv'
 
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
 risk_factors_data = pd.read_csv(risk_factors_path)
 height_data = pd.read_csv(height_data_path)
+life_data = pd.read_csv(life_data_path)
 
 # Display the first few rows of the data
 print(iq_data.head())
 print(nutri_data.head())
 print(risk_factors_data.head())
 print(height_data.head())
+print(life_data.head())
 
 # Check for missing values in iq_data and nutri_data
 print("Missing values in iq_data per column:")
@@ -34,6 +37,10 @@ print(risk_factors_data.isna().sum())
 # Check for missing values in the height data
 print("Missing values in height_data per column:")
 print(height_data.isna().sum())
+
+# Check for missing values in the height data
+print("Missing values in life_data per column:")
+print(life_data.isna().sum())
 
 # Ensure 'Population - 2023' is numeric
 iq_data['Population - 2023'] = pd.to_numeric(iq_data['Population - 2023'], errors='coerce')
@@ -51,6 +58,14 @@ print(iq_data_clean.columns)
 
 nutri_data_clean = nutri_data.dropna(subset=['Cereals - Excluding Beer', 'Eggs', 'Fish, Seafood', 'Meat', 'Milk - Excluding Butter', 'Offals', 'Vegetal Products', 'Obesity', 'Undernourished'])
 print(nutri_data_clean.columns)
+
+# Check if the required columns exist in life_data
+required_columns = ['HIV/AIDS', 'thinness 1-19 years']
+existing_columns = [col for col in required_columns if col in life_data.columns]
+
+life_data_clean = life_data.dropna(subset=existing_columns)
+print(life_data_clean.columns)
+
 
 # Calculate quartiles
 quartiles = iq_data_clean['Average IQ'].quantile([0.25, 0.5, 0.75])
@@ -72,6 +87,16 @@ iq_data_clean['IQ Quartile'] = iq_data_clean['Average IQ'].apply(assign_quartile
 
 # Convert population to millions for plotting
 iq_data_clean['Population (Millions)'] = iq_data_clean['Population - 2023'] / 1e6
+
+# Columns for aggregation
+columns_to_aggregate = [
+    'HIV/AIDS', 'thinness 1-19 years'
+]
+
+# Aggregate the data from 2000 to 2015 for each country
+aggregated_data = life_data.groupby(['Country', 'Status'])[columns_to_aggregate].sum().reset_index()
+
+print(aggregated_data.head())
 
 # Scatter plot of Average IQ vs Population (in millions)
 plt.figure(figsize=(12, 8))
@@ -325,10 +350,6 @@ plt.ylabel('Mean Female Height (cm)')
 plt.xticks(rotation=90, ha='right')
 plt.show()
 
-# Ensure each country has enough space in the text
-plt.yticks(rotation=0, ha='right')
-plt.show()
-
 # Filter the height data for India from 1896 to 1996
 height_india = height_data[(height_data['Entity'] == 'India') & (height_data['Year'] >= 1896) & (height_data['Year'] <= 1996)]
 
@@ -349,3 +370,42 @@ plt.xlabel('Year')
 plt.ylabel('Mean Female Height (cm)')
 plt.xticks(rotation=90)
 plt.show()
+
+# Define color mapping based on status
+colors = {'Developed': 'blue', 'Developing': 'red'}
+aggregated_data['Color'] = aggregated_data['Status'].map(colors)
+
+# Create a pie chart for HIV/AIDS
+plt.figure(figsize=(12, 8))
+plt.pie(aggregated_data['HIV/AIDS'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
+        autopct='%1.1f%%', startangle=140)
+plt.title('HIV/AIDS Share by Country (2000-2015)')
+plt.show()
+
+# Create a pie chart for Thinness 1-19 years
+plt.figure(figsize=(12, 8))
+plt.pie(aggregated_data['thinness 1-19 years'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
+        autopct='%1.1f%%', startangle=140)
+plt.title('Thinness 1-19 Years Share by Country (2000-2015)')
+plt.show()
+
+def find_country_info(country_name, data, column):
+    country_data = data[data['Country'] == country_name]
+    if not country_data.empty:
+        country_value = country_data[column].values[0]
+        total_value = data[column].sum()
+        country_share = (country_value / total_value) * 100
+        rank = data.sort_values(by=column, ascending=False).reset_index().reset_index()
+        country_rank = rank[rank['Country'] == country_name].index[0] + 1
+        return country_share, country_rank
+    else:
+        return None, None
+
+# Example: Find information for 'India' for HIV/AIDS
+country_name = 'India'
+column = 'HIV/AIDS'
+share, rank = find_country_info(country_name, aggregated_data, column)
+if share is not None:
+    print(f"{country_name} has a {share:.2f}% share of {column} and is ranked {rank}.")
+else:
+    print(f"{country_name} not found in the data.")
