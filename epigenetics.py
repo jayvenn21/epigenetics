@@ -59,6 +59,9 @@ print(iq_data_clean.columns)
 nutri_data_clean = nutri_data.dropna(subset=['Cereals - Excluding Beer', 'Eggs', 'Fish, Seafood', 'Meat', 'Milk - Excluding Butter', 'Offals', 'Vegetal Products', 'Obesity', 'Undernourished'])
 print(nutri_data_clean.columns)
 
+risk_factors_data_clean = risk_factors_data.dropna(subset=['Unsafe water source', 'Unsafe sanitation', 'Non-exclusive breastfeeding' , 'Discontinued breastfeeding', 'Child wasting', 'Child stunting', 'Low physical activity'])
+print(risk_factors_data_clean.columns)
+
 # Check if the required columns exist in life_data
 required_columns = ['HIV/AIDS', 'thinness 1-19 years']
 existing_columns = [col for col in required_columns if col in life_data.columns]
@@ -326,6 +329,31 @@ plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', 
 
 plt.show()
 
+# Scatter plot of Low Physical Activity and Child Stunting
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=iq_data_clean, x='GNI - 2021', y='Average IQ', hue='IQ Quartile', palette='viridis')
+plt.title('Average IQ vs GNI - 2021')
+plt.xlabel('GNI (2021)')
+plt.ylabel('Average IQ')
+plt.xscale('log')  # Optional: Use log scale if GNI range is large
+
+# Label each point with the country name
+for i, row in iq_data_clean.iterrows():
+    plt.text(row['GNI - 2021'], row['Average IQ'], row['Country'], fontsize=8, alpha=0.75)
+
+# Fit linear model
+X = iq_data_clean[['GNI - 2021']]
+y = iq_data_clean['Average IQ']
+model = LinearRegression().fit(X, y)
+r_squared = model.score(X, y)
+correlation_coefficient = np.sqrt(r_squared)
+print(f"Correlation coefficient (r) for IQ vs GNI: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for IQ vs GNI: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
+plt.show()
 
 # Analysis on Mean Male and Female Height
 
@@ -375,27 +403,13 @@ plt.show()
 colors = {'Developed': 'blue', 'Developing': 'red'}
 aggregated_data['Color'] = aggregated_data['Status'].map(colors)
 
-# Create a pie chart for HIV/AIDS
-plt.figure(figsize=(12, 8))
-plt.pie(aggregated_data['HIV/AIDS'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
-        autopct='%1.1f%%', startangle=140)
-plt.title('HIV/AIDS Share by Country (2000-2015)')
-plt.show()
-
-# Create a pie chart for Thinness 1-19 years
-plt.figure(figsize=(12, 8))
-plt.pie(aggregated_data['thinness 1-19 years'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
-        autopct='%1.1f%%', startangle=140)
-plt.title('Thinness 1-19 Years Share by Country (2000-2015)')
-plt.show()
-
 def find_country_info(country_name, data, column):
     country_data = data[data['Country'] == country_name]
     if not country_data.empty:
         country_value = country_data[column].values[0]
         total_value = data[column].sum()
         country_share = (country_value / total_value) * 100
-        rank = data.sort_values(by=column, ascending=False).reset_index().reset_index()
+        rank = data.sort_values(by=column, ascending=False).reset_index(drop=True)
         country_rank = rank[rank['Country'] == country_name].index[0] + 1
         return country_share, country_rank
     else:
@@ -404,8 +418,75 @@ def find_country_info(country_name, data, column):
 # Example: Find information for 'India' for HIV/AIDS
 country_name = 'India'
 column = 'HIV/AIDS'
-share, rank = find_country_info(country_name, aggregated_data, column)
-if share is not None:
-    print(f"{country_name} has a {share:.2f}% share of {column} and is ranked {rank}.")
+share_hiv, rank_hiv = find_country_info(country_name, aggregated_data, column)
+if share_hiv is not None:
+    print(f"{country_name} has a {share_hiv:.2f}% share of {column} and is ranked {rank_hiv}.")
 else:
     print(f"{country_name} not found in the data.")
+
+# Example: Find information for 'India' for thinness 1-19 years
+column = 'thinness 1-19 years'
+share_thinness, rank_thinness = find_country_info(country_name, aggregated_data, column)
+if share_thinness is not None:
+    print(f"{country_name} has a {share_thinness:.2f}% share of {column} and is ranked {rank_thinness}.")
+else:
+    print(f"{country_name} not found in the data.")
+
+# Create a pie chart for HIV/AIDS
+plt.figure(figsize=(12, 8))
+plt.pie(aggregated_data['HIV/AIDS'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
+        autopct='%1.1f%%', startangle=140)
+plt.title('HIV/AIDS Share by Country (2000-2015)')
+# Display India's statistic on the pie chart
+if share_hiv is not None:
+    plt.text(-1.5, 1, f"India: {share_hiv:.2f}%\nRank: {rank_hiv}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Thinness 1-19 years
+plt.figure(figsize=(12, 8))
+plt.pie(aggregated_data['thinness 1-19 years'], labels=aggregated_data['Country'], colors=aggregated_data['Color'],
+        autopct='%1.1f%%', startangle=140)
+plt.title('Thinness 1-19 Years Share by Country (2000-2015)')
+# Display India's statistic on the pie chart
+if share_thinness is not None:
+    plt.text(-1.5, 1, f"India: {share_thinness:.2f}%\nRank: {rank_thinness}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+
+
+# Filter data for the year 2017 and remove duplicates
+risk_factors_data_clean_2017 = risk_factors_data_clean[risk_factors_data_clean['Year'] == 2017].drop_duplicates(subset=['Entity'])
+
+# Calculate the rank of India based on 'Child stunting'
+risk_factors_data_clean_2017 = risk_factors_data_clean_2017.sort_values(by='Child stunting', ascending=False).reset_index(drop=True)
+india_rank = risk_factors_data_clean_2017[risk_factors_data_clean_2017['Entity'] == 'India'].index[0] + 1
+total_entities = risk_factors_data_clean_2017.shape[0]
+
+# Scatter plot of Low physical activity vs. Child stunting
+plt.figure(figsize=(12, 8))
+sns.scatterplot(data=risk_factors_data_clean_2017, x='Low physical activity', y='Child stunting', hue='Entity', palette='viridis', legend=None)
+plt.title('Low Physical Activity vs. Child Stunting in 2017')
+plt.xlabel('Number of Deaths from Low Physical Activity')
+plt.ylabel('Number of Deaths from Child Stunting')
+
+# Label each point with the country name
+for i, row in risk_factors_data_clean_2017.iterrows():
+    plt.text(row['Low physical activity'], row['Child stunting'], row['Entity'], fontsize=8, alpha=0.75)
+
+# Fit linear model
+X = risk_factors_data_clean_2017[['Low physical activity']]  # Ensure X is a 2D array
+y = risk_factors_data_clean_2017['Child stunting']
+model = LinearRegression().fit(X, y)
+r_squared = model.score(X, y)
+correlation_coefficient = np.sqrt(r_squared)
+print(f"Correlation coefficient (r) for Low physical activity vs. Child stunting: {correlation_coefficient}")
+print(f"Coefficient of determination (r^2) for Low physical activity vs. Child stunting: {r_squared}")
+
+# Display r and r^2 on the plot
+plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', ha='right', va='bottom', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
+# Display India's rank on the plot
+plt.text(0.05, 0.95, f'India is in {india_rank}th place out of {total_entities} entities in 2017', ha='left', va='top', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+
+# Show plot
+plt.show()
