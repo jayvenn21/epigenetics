@@ -10,12 +10,14 @@ nutri_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(10)/Pro
 risk_factors_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/number-of-deaths-by-risk-factor.csv'
 height_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/annual-change-in-average-male-height.csv'
 life_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Life Expectancy Data.csv'
+dietary_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
 
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
 risk_factors_data = pd.read_csv(risk_factors_path)
 height_data = pd.read_csv(height_data_path)
 life_data = pd.read_csv(life_data_path)
+dietary_data = pd.read_csv(dietary_path)
 
 # Display the first few rows of the data
 print(iq_data.head())
@@ -23,6 +25,7 @@ print(nutri_data.head())
 print(risk_factors_data.head())
 print(height_data.head())
 print(life_data.head())
+print(dietary_data.head())
 
 # Check for missing values in iq_data and nutri_data
 print("Missing values in iq_data per column:")
@@ -38,9 +41,13 @@ print(risk_factors_data.isna().sum())
 print("Missing values in height_data per column:")
 print(height_data.isna().sum())
 
-# Check for missing values in the height data
+# Check for missing values in the life data
 print("Missing values in life_data per column:")
 print(life_data.isna().sum())
+
+# Check for missing values in the secondary nutri data
+print("Missing values in life_data per column:")
+print(dietary_data.isna().sum())
 
 # Ensure 'Population - 2023' is numeric
 iq_data['Population - 2023'] = pd.to_numeric(iq_data['Population - 2023'], errors='coerce')
@@ -61,6 +68,7 @@ print(nutri_data_clean.columns)
 
 risk_factors_data_clean = risk_factors_data.dropna(subset=['Unsafe water source', 'Unsafe sanitation', 'Non-exclusive breastfeeding' , 'Discontinued breastfeeding', 'Child wasting', 'Child stunting', 'Low physical activity'])
 print(risk_factors_data_clean.columns)
+
 
 # Check if the required columns exist in life_data
 required_columns = ['HIV/AIDS', 'thinness 1-19 years']
@@ -452,8 +460,6 @@ if share_thinness is not None:
     plt.text(-1.5, 1, f"India: {share_thinness:.2f}%\nRank: {rank_thinness}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 plt.show()
 
-
-
 # Filter data for the year 2017 and remove duplicates
 risk_factors_data_clean_2017 = risk_factors_data_clean[risk_factors_data_clean['Year'] == 2017].drop_duplicates(subset=['Entity'])
 
@@ -489,4 +495,88 @@ plt.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr^2: {r_squared:.2f}', 
 plt.text(0.05, 0.95, f'India is in {india_rank}th place out of {total_entities} entities in 2017', ha='left', va='top', transform=plt.gca().transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 
 # Show plot
+plt.show()
+
+
+# Filter out necessary information and clean the data by removing rows with NaN values in relevant columns
+dietary_data_clean = dietary_data.dropna(subset=['Whole grains', 'Red meat', 'Fish', 'Dairy'])
+
+# Recalculate the combination of Fish, Dairy, and Red Meat after cleaning
+nuts_fish_dairy_red_meat_clean = dietary_data_clean[['Nuts', 'Fish', 'Dairy', 'Red meat']].sum(axis=1)
+
+# Function to find India's share and rank
+def find_country_info(country_name, data, column):
+    country_data = data[data['country'] == country_name]
+    if not country_data.empty:
+        country_value = country_data[column].values[0]
+        total_value = data[column].sum()
+        country_share = (country_value / total_value) * 100
+        rank = data.sort_values(by=column, ascending=False).reset_index(drop=True)
+        country_rank = rank[rank['country'] == country_name].index[0] + 1
+        total_countries = len(data['country'])
+        return country_share, country_rank, total_countries
+    else:
+        return None, None, None
+
+# Find information for 'India' for each category after cleaning
+country_name = 'India'
+share_whole_grains, rank_whole_grains, total_countries = find_country_info(country_name, dietary_data_clean, 'Whole grains')
+share_legumes, rank_legumes, total_countries = find_country_info(country_name, dietary_data_clean, 'Legumes')
+share_nuts, rank_nuts, total_countries = find_country_info(country_name, dietary_data_clean, 'Nuts')
+share_dairy, rank_dairy, _ = find_country_info(country_name, dietary_data_clean, 'Dairy')
+share_red_meat, rank_red_meat, _ = find_country_info(country_name, dietary_data_clean, 'Red meat')
+share_nuts_fish_dairy_red_meat, rank_nuts_fish_dairy_red_meat, _ = find_country_info(country_name, pd.DataFrame({'country': dietary_data_clean['country'], 'Nuts_Fish_Dairy_Red_meat': nuts_fish_dairy_red_meat_clean}), 'Nuts_Fish_Dairy_Red_meat')
+
+# Create a pie chart for Whole Grains
+plt.figure(figsize=(12, 8))
+plt.pie(dietary_data_clean['Whole grains'], labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Whole Grains Consumption by Country')
+# Display India's statistic on the pie chart
+if share_whole_grains is not None:
+    plt.text(-1.5, 1, f"India: {share_whole_grains:.2f}%\n{rank_whole_grains} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Legumes
+plt.figure(figsize=(12, 8))
+plt.pie(dietary_data_clean['Legumes'], labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Legumes Consumption by Country')
+# Display India's statistic on the pie chart
+if share_whole_grains is not None:
+    plt.text(-1.5, 1, f"India: {share_legumes:.2f}%\n{rank_legumes} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Nuts
+plt.figure(figsize=(12, 8))
+plt.pie(dietary_data_clean['Nuts'], labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Nuts Consumption by Country')
+# Display India's statistic on the pie chart
+if share_whole_grains is not None:
+    plt.text(-1.5, 1, f"India: {share_nuts:.2f}%\n{rank_nuts} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Dairy
+plt.figure(figsize=(12, 8))
+plt.pie(dietary_data_clean['Dairy'], labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Dairy Consumption by Country')
+# Display India's statistic on the pie chart
+if share_dairy is not None:
+    plt.text(-1.5, 1, f"India: {share_dairy:.2f}%\n{rank_dairy} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Red Meat
+plt.figure(figsize=(12, 8))
+plt.pie(dietary_data_clean['Red meat'], labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Red Meat Consumption by Country')
+# Display India's statistic on the pie chart
+if share_red_meat is not None:
+    plt.text(-1.5, 1, f"India: {share_red_meat:.2f}%\n{rank_red_meat} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
+plt.show()
+
+# Create a pie chart for Nuts, Fish, Dairy, and Red Meat
+plt.figure(figsize=(12, 8))
+plt.pie(nuts_fish_dairy_red_meat_clean, labels=dietary_data_clean['country'], autopct='%1.1f%%', startangle=140)
+plt.title('Combined Consumption of Nuts, Fish, Dairy, and Red Meat by Country')
+# Display India's statistic on the pie chart
+if share_nuts_fish_dairy_red_meat is not None:
+    plt.text(-1.5, 1, f"India: {share_nuts_fish_dairy_red_meat:.2f}%\n{rank_nuts_fish_dairy_red_meat} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 plt.show()
