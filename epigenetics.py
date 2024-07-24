@@ -11,7 +11,8 @@ risk_factors_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/number-o
 height_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/annual-change-in-average-male-height.csv'
 life_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Life Expectancy Data.csv'
 dietary_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
-inter_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
+inter_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Intervention.csv'
+
 
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
@@ -20,6 +21,7 @@ height_data = pd.read_csv(height_data_path)
 life_data = pd.read_csv(life_data_path)
 dietary_data = pd.read_csv(dietary_path)
 inter_data = pd.read_csv(inter_path)
+
 
 # Display the first few rows of the data
 print(iq_data.head())
@@ -667,15 +669,171 @@ plt.xticks(rotation=45)
 plt.legend(title='Socioeconomic Group')
 plt.show()
 
-# Additional bar graphs for specific years for Vitamin A to highlight changes over time
-years = vitamin_a_data['year'].unique()
 
-for year in sorted(years):
-    yearly_data = vitamin_a_data[vitamin_a_data['year'] == year]
-    plt.figure(figsize=(10, 6))
-    ax = sns.barplot(x='socioeconomic_value', y='Vitamin_A', hue='socioeconomic_group', data=yearly_data, errorbar=None)
-    add_labels(ax)
-    plt.title(f'Vitamin A Distribution across Socioeconomic Groups in {year}')
-    plt.xticks(rotation=90)
-    plt.ylabel('Vitamin A (%)')
-    plt.show()
+
+    # Function to add data labels to the bar plots
+def add_labels(ax):
+    for p in ax.patches:
+        height = p.get_height()
+        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+
+# Read the data
+region_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Region Adult.csv'
+region_data = pd.read_csv(region_path)
+
+# Filter data for Southern Asia
+southern_asia_data = region_data[region_data['region'] == 'Southern Asia']
+
+# Rename columns for clarity
+southern_asia_data.rename(columns={'disagg.value': 'gender'}, inplace=True)
+
+# Melt the data for Adult Obesity
+obesity_cols = [col for col in southern_asia_data.columns if 'adult_obesity_' in col]
+obesity_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=obesity_cols, var_name='year', value_name='Adult_Obesity')
+obesity_data['year'] = obesity_data['year'].str.replace('adult_obesity_', '').astype(int)
+
+# Plotting the overall changes in Adult Obesity
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Adult Obesity for Males
+plt.subplot(2, 1, 1)
+male_data = obesity_data[obesity_data['gender'] == 'Male']
+ax = sns.barplot(x='year', y='Adult_Obesity', data=male_data, ci=None)
+add_labels(ax)
+plt.title('Adult Obesity in Southern Asia (Male)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Obesity (%)')
+
+# Overall changes in Adult Obesity for Females
+plt.subplot(2, 1, 2)
+female_data = obesity_data[obesity_data['gender'] == 'Female']
+ax = sns.barplot(x='year', y='Adult_Obesity', data=female_data, ci=None)
+add_labels(ax)
+plt.title('Adult Obesity in Southern Asia (Female)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Obesity (%)')
+
+plt.tight_layout()
+plt.show()
+
+# Melt the data for Adult Overweight
+overweight_cols = [col for col in southern_asia_data.columns if 'adult_overweight_' in col]
+overweight_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=overweight_cols, var_name='year', value_name='Adult_Overweight')
+overweight_data['year'] = overweight_data['year'].str.replace('adult_overweight_', '').astype(int)
+
+
+# Plotting the overall changes in Adult Overweight
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Adult Overweight for Males
+plt.subplot(2, 1, 1)
+male_data = overweight_data[overweight_data['gender'] == 'Male']
+ax = sns.barplot(x='year', y='Adult_Overweight', data=male_data, ci=None)
+add_labels(ax)
+plt.title('Adult Overweight in Southern Asia (Male)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Overweight (%)')
+
+# Overall changes in Adult Overweight for Females
+plt.subplot(2, 1, 2)
+female_data = overweight_data[overweight_data['gender'] == 'Female']
+ax = sns.barplot(x='year', y='Adult_Overweight', data=female_data, ci=None)
+add_labels(ax)
+plt.title('Adult Overweight in Southern Asia (Female)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Overweight (%)')
+
+plt.tight_layout()
+plt.show()
+
+# Melt the data for Adult Underweight
+underweight_cols = [col for col in southern_asia_data.columns if 'adult_underweight_' in col]
+underweight_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=underweight_cols, var_name='year', value_name='Adult_Underweight')
+underweight_data['year'] = underweight_data['year'].str.replace('adult_underweight_', '').astype(int)
+
+
+# Plotting the overall changes in Adult Underweight
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Adult Underweight for Males
+plt.subplot(2, 1, 1)
+male_data = underweight_data[underweight_data['gender'] == 'Male']
+ax = sns.barplot(x='year', y='Adult_Underweight', data=male_data, ci=None)
+add_labels(ax)
+plt.title('Adult Underweight in Southern Asia (Male)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Underweight (%)')
+
+# Overall changes in Adult Underweight for Females
+plt.subplot(2, 1, 2)
+female_data = underweight_data[underweight_data['gender'] == 'Female']
+ax = sns.barplot(x='year', y='Adult_Underweight', data=female_data, ci=None)
+add_labels(ax)
+plt.title('Adult Underweight in Southern Asia (Female)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Underweight (%)')
+
+plt.tight_layout()
+plt.show()
+
+# Melt the data for Adult Blood Pressure
+blood_pressure_cols = [col for col in southern_asia_data.columns if 'adult_blood_pressure_' in col]
+blood_pressure_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=blood_pressure_cols, var_name='year', value_name='Adult_Blood_Pressure')
+blood_pressure_data['year'] = blood_pressure_data['year'].str.replace('adult_blood_pressure_', '').astype(int)
+
+
+# Plotting the overall changes in Adult Blood Pressure
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Adult Blood Pressure for Males
+plt.subplot(2, 1, 1)
+male_data = blood_pressure_data[blood_pressure_data['gender'] == 'Male']
+ax = sns.barplot(x='year', y='Adult_Blood_Pressure', data=male_data, ci=None)
+add_labels(ax)
+plt.title('Adult Blood Pressure in Southern Asia (Male)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Blood Pressure (%)')
+
+# Overall changes in Adult Underweight for Females
+plt.subplot(2, 1, 2)
+female_data = blood_pressure_data[blood_pressure_data['gender'] == 'Female']
+ax = sns.barplot(x='year', y='Adult_Blood_Pressure', data=female_data, ci=None)
+add_labels(ax)
+plt.title('Adult Blood Pressure in Southern Asia (Female)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Blood Pressure (%)')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# Melt the data for Adult Diabetes
+diabetes_cols = [col for col in southern_asia_data.columns if 'adult_diabetes_' in col]
+diabetes_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=diabetes_cols, var_name='year', value_name='Adult_Diabetes')
+diabetes_data['year'] = diabetes_data['year'].str.replace('adult_diabetes_', '').astype(int)
+
+
+# Plotting the overall changes in Adult Diabetes
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Adult Diabetes for Males
+plt.subplot(2, 1, 1)
+male_data = diabetes_data[diabetes_data['gender'] == 'Male']
+ax = sns.barplot(x='year', y='Adult_Diabetes', data=male_data, ci=None)
+add_labels(ax)
+plt.title('Adult Diabetes in Southern Asia (Male)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Diabetes (%)')
+
+# Overall changes in Adult Diabetes for Females
+plt.subplot(2, 1, 2)
+female_data = diabetes_data[diabetes_data['gender'] == 'Female']
+ax = sns.barplot(x='year', y='Adult_Diabetes', data=female_data, ci=None)
+add_labels(ax)
+plt.title('Adult Diabetes in Southern Asia (Female)')
+plt.xticks(rotation=90)
+plt.ylabel('Adult Diabetes (%)')
+
+plt.tight_layout()
+plt.show()
