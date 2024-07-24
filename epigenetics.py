@@ -11,6 +11,7 @@ risk_factors_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/number-o
 height_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/annual-change-in-average-male-height.csv'
 life_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Life Expectancy Data.csv'
 dietary_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
+inter_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
 
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
@@ -18,6 +19,7 @@ risk_factors_data = pd.read_csv(risk_factors_path)
 height_data = pd.read_csv(height_data_path)
 life_data = pd.read_csv(life_data_path)
 dietary_data = pd.read_csv(dietary_path)
+inter_data = pd.read_csv(inter_path)
 
 # Display the first few rows of the data
 print(iq_data.head())
@@ -26,6 +28,7 @@ print(risk_factors_data.head())
 print(height_data.head())
 print(life_data.head())
 print(dietary_data.head())
+print(inter_data.head())
 
 # Check for missing values in iq_data and nutri_data
 print("Missing values in iq_data per column:")
@@ -48,6 +51,10 @@ print(life_data.isna().sum())
 # Check for missing values in the secondary nutri data
 print("Missing values in life_data per column:")
 print(dietary_data.isna().sum())
+
+# Check for missing values in the secondary nutri data
+print("Missing values in inter_data per column:")
+print(inter_data.isna().sum())
 
 # Ensure 'Population - 2023' is numeric
 iq_data['Population - 2023'] = pd.to_numeric(iq_data['Population - 2023'], errors='coerce')
@@ -580,3 +587,95 @@ plt.title('Combined Consumption of Nuts, Fish, Dairy, and Red Meat by Country')
 if share_nuts_fish_dairy_red_meat is not None:
     plt.text(-1.5, 1, f"India: {share_nuts_fish_dairy_red_meat:.2f}%\n{rank_nuts_fish_dairy_red_meat} out of {total_countries}", fontsize=12, bbox=dict(facecolor='white', alpha=0.6))
 plt.show()
+
+
+# Filter data for India
+india_data = inter_data[inter_data['country'] == 'India']
+
+# Rename columns for clarity
+india_data.rename(columns={'disaggregation': 'socioeconomic_group', 'disagg.value': 'socioeconomic_value'}, inplace=True)
+
+# Melt the data for Vitamin A, Iron Supplements, Diarrhea Zinc, and Iron Tablets
+vitamin_a_cols = [col for col in india_data.columns if 'vit_a_' in col]
+iron_supp_cols = [col for col in india_data.columns if 'iron_supp_' in col]
+diarrhea_zinc_cols = [col for col in india_data.columns if 'diarrhea_zinc_' in col]
+iron_tablets_cols = [col for col in india_data.columns if 'iron_tablets_' in col]
+
+# Melt data for plotting
+vitamin_a_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=vitamin_a_cols, var_name='year', value_name='Vitamin_A')
+vitamin_a_data['year'] = vitamin_a_data['year'].str.replace('vit_a_', '').astype(int)
+
+iron_supp_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=iron_supp_cols, var_name='year', value_name='Iron_Supp')
+iron_supp_data['year'] = iron_supp_data['year'].str.replace('iron_supp_', '').astype(int)
+
+diarrhea_zinc_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=diarrhea_zinc_cols, var_name='year', value_name='Diarrhea_Zinc')
+diarrhea_zinc_data['year'] = diarrhea_zinc_data['year'].str.replace('diarrhea_zinc_', '').astype(int)
+
+iron_tablets_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=iron_tablets_cols, var_name='year', value_name='Iron_Tablets')
+iron_tablets_data['year'] = iron_tablets_data['year'].str.replace('iron_tablets_', '').astype(int)
+
+# Function to add data labels to the bar plots
+def add_labels(ax):
+    for p in ax.patches:
+        height = p.get_height()
+        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+
+# Plotting the overall changes in Vitamin A, Iron Supplements, Diarrhea Zinc, and Iron Tablets
+plt.figure(figsize=(14, 8))
+
+# Overall changes in Vitamin A
+plt.subplot(2, 2, 1)
+ax = sns.barplot(x='socioeconomic_value', y='Vitamin_A', hue='socioeconomic_group', data=vitamin_a_data, errorbar=None)
+add_labels(ax)
+plt.title('Vitamin A Distribution across Socioeconomic Groups')
+plt.xticks(rotation=90)
+plt.ylabel('Vitamin A (%)')
+
+# Overall changes in Iron Supplements
+plt.subplot(2, 2, 2)
+ax = sns.barplot(x='socioeconomic_value', y='Iron_Supp', hue='socioeconomic_group', data=iron_supp_data, errorbar=None)
+add_labels(ax)
+plt.title('Iron Supplements Distribution across Socioeconomic Groups')
+plt.xticks(rotation=90)
+plt.ylabel('Iron Supplements (%)')
+
+# Overall changes in Diarrhea Zinc
+plt.subplot(2, 2, 3)
+ax = sns.barplot(x='socioeconomic_value', y='Diarrhea_Zinc', hue='socioeconomic_group', data=diarrhea_zinc_data, errorbar=None)
+add_labels(ax)
+plt.title('Diarrhea Zinc Distribution across Socioeconomic Groups')
+plt.xticks(rotation=90)
+plt.ylabel('Diarrhea Zinc (%)')
+
+# Overall changes in Iron Tablets
+plt.subplot(2, 2, 4)
+ax = sns.barplot(x='socioeconomic_value', y='Iron_Tablets', hue='socioeconomic_group', data=iron_tablets_data, errorbar=None)
+add_labels(ax)
+plt.title('Iron Tablets Distribution across Socioeconomic Groups')
+plt.xticks(rotation=90)
+plt.ylabel('Iron Tablets (%)')
+
+plt.tight_layout()
+plt.show()
+
+# Plotting the change in Vitamin A over time for India
+plt.figure(figsize=(12, 6))
+sns.lineplot(x='year', y='Vitamin_A', hue='socioeconomic_group', style='socioeconomic_value', data=vitamin_a_data, markers=True, dashes=False)
+plt.title('Change in Vitamin A Over Time in India')
+plt.ylabel('Vitamin A (%)')
+plt.xticks(rotation=45)
+plt.legend(title='Socioeconomic Group')
+plt.show()
+
+# Additional bar graphs for specific years for Vitamin A to highlight changes over time
+years = vitamin_a_data['year'].unique()
+
+for year in sorted(years):
+    yearly_data = vitamin_a_data[vitamin_a_data['year'] == year]
+    plt.figure(figsize=(10, 6))
+    ax = sns.barplot(x='socioeconomic_value', y='Vitamin_A', hue='socioeconomic_group', data=yearly_data, errorbar=None)
+    add_labels(ax)
+    plt.title(f'Vitamin A Distribution across Socioeconomic Groups in {year}')
+    plt.xticks(rotation=90)
+    plt.ylabel('Vitamin A (%)')
+    plt.show()
