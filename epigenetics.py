@@ -792,3 +792,40 @@ plot_data(male_blood_pressure_data, female_blood_pressure_data, 'Adult Blood Pre
 # Adult Diabetes
 male_diabetes_data, female_diabetes_data = melt_and_predict(southern_asia_data, 'adult_diabetes_', future_year)
 plot_data(male_diabetes_data, female_diabetes_data, 'Adult Diabetes')
+
+# Load the Excel file
+table_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Adult_Height_Trends(1998-2015).xlsx'
+table_data = pd.ExcelFile(table_path)
+
+# Extract the specified tables
+tables = ['tbl2', 'tbl5', 'tbl6', 'tbl8']
+data_frames = {table: table_data.parse(table) for table in tables}
+
+# Standardize column names and structure
+def standardize_table(df, region_col, height_col):
+    df = df.rename(columns={region_col: 'Region', height_col: 'Height'})
+    df = df[['Region', 'Gender', 'Height', 'AgeGroups']]
+    return df
+
+# Apply the standardization function to the data frames
+data_frames['tbl2'] = standardize_table(data_frames['tbl2'], 'Religion', '2015–2016')
+data_frames['tbl5'] = standardize_table(data_frames['tbl5'], 'Type of caste or tribe', '2015–2016')
+data_frames['tbl6'] = standardize_table(data_frames['tbl6'], 'Type of place or residence', '2015–2016')
+data_frames['tbl8'] = standardize_table(data_frames['tbl8'], 'Wealth Index', '2015–2016')
+
+# Combine the relevant data
+combined_data = pd.concat(data_frames.values())
+
+# Filtering out rows with NaN values in 'Height' for cleaner visualization
+combined_data = combined_data.dropna(subset=['Height'])
+
+# Create a combined bar graph
+plt.figure(figsize=(14, 8))
+sns.barplot(x='Region', y='Height', hue='Gender', data=combined_data, ci=None)
+plt.title('Heights of Men and Women by Region/Group')
+plt.xticks(rotation=90)
+plt.ylabel('Height (cm)')
+plt.xlabel('Region/Group')
+plt.legend(title='Gender')
+plt.tight_layout()
+plt.show()
