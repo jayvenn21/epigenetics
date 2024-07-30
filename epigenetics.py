@@ -591,8 +591,20 @@ if share_nuts_fish_dairy_red_meat is not None:
 plt.show()
 
 
+# Function to add data labels to the bar plots
+def add_labels(ax):
+    for p in ax.patches:
+        height = p.get_height()
+        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+
+# Ensure all columns are numeric
+def convert_to_numeric(df, cols):
+    for col in cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    return df
+
 # Filter data for India
-india_data = inter_data[inter_data['country'] == 'India']
+india_data = inter_data[inter_data['country'] == 'India'].copy()
 
 # Rename columns for clarity
 india_data.rename(columns={'disaggregation': 'socioeconomic_group', 'disagg.value': 'socioeconomic_value'}, inplace=True)
@@ -606,21 +618,19 @@ iron_tablets_cols = [col for col in india_data.columns if 'iron_tablets_' in col
 # Melt data for plotting
 vitamin_a_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=vitamin_a_cols, var_name='year', value_name='Vitamin_A')
 vitamin_a_data['year'] = vitamin_a_data['year'].str.replace('vit_a_', '').astype(int)
+vitamin_a_data = convert_to_numeric(vitamin_a_data, ['Vitamin_A'])
 
 iron_supp_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=iron_supp_cols, var_name='year', value_name='Iron_Supp')
 iron_supp_data['year'] = iron_supp_data['year'].str.replace('iron_supp_', '').astype(int)
+iron_supp_data = convert_to_numeric(iron_supp_data, ['Iron_Supp'])
 
 diarrhea_zinc_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=diarrhea_zinc_cols, var_name='year', value_name='Diarrhea_Zinc')
 diarrhea_zinc_data['year'] = diarrhea_zinc_data['year'].str.replace('diarrhea_zinc_', '').astype(int)
+diarrhea_zinc_data = convert_to_numeric(diarrhea_zinc_data, ['Diarrhea_Zinc'])
 
 iron_tablets_data = india_data.melt(id_vars=['country', 'socioeconomic_group', 'socioeconomic_value'], value_vars=iron_tablets_cols, var_name='year', value_name='Iron_Tablets')
 iron_tablets_data['year'] = iron_tablets_data['year'].str.replace('iron_tablets_', '').astype(int)
-
-# Function to add data labels to the bar plots
-def add_labels(ax):
-    for p in ax.patches:
-        height = p.get_height()
-        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+iron_tablets_data = convert_to_numeric(iron_tablets_data, ['Iron_Tablets'])
 
 # Plotting the overall changes in Vitamin A, Iron Supplements, Diarrhea Zinc, and Iron Tablets
 plt.figure(figsize=(14, 8))
@@ -632,6 +642,8 @@ add_labels(ax)
 plt.title('Vitamin A Distribution across Socioeconomic Groups')
 plt.xticks(rotation=90)
 plt.ylabel('Vitamin A (%)')
+# Set y-axis limits
+plt.ylim(vitamin_a_data['Vitamin_A'].min(), vitamin_a_data['Vitamin_A'].max())
 
 # Overall changes in Iron Supplements
 plt.subplot(2, 2, 2)
@@ -640,6 +652,8 @@ add_labels(ax)
 plt.title('Iron Supplements Distribution across Socioeconomic Groups')
 plt.xticks(rotation=90)
 plt.ylabel('Iron Supplements (%)')
+# Set y-axis limits
+plt.ylim(iron_supp_data['Iron_Supp'].min(), iron_supp_data['Iron_Supp'].max())
 
 # Overall changes in Diarrhea Zinc
 plt.subplot(2, 2, 3)
@@ -648,6 +662,8 @@ add_labels(ax)
 plt.title('Diarrhea Zinc Distribution across Socioeconomic Groups')
 plt.xticks(rotation=90)
 plt.ylabel('Diarrhea Zinc (%)')
+# Set y-axis limits
+plt.ylim(diarrhea_zinc_data['Diarrhea_Zinc'].min(), diarrhea_zinc_data['Diarrhea_Zinc'].max())
 
 # Overall changes in Iron Tablets
 plt.subplot(2, 2, 4)
@@ -656,18 +672,23 @@ add_labels(ax)
 plt.title('Iron Tablets Distribution across Socioeconomic Groups')
 plt.xticks(rotation=90)
 plt.ylabel('Iron Tablets (%)')
+# Set y-axis limits
+plt.ylim(iron_tablets_data['Iron_Tablets'].min(), iron_tablets_data['Iron_Tablets'].max())
 
 plt.tight_layout()
 plt.show()
 
 # Plotting the change in Vitamin A over time for India
 plt.figure(figsize=(12, 6))
-sns.lineplot(x='year', y='Vitamin_A', hue='socioeconomic_group', style='socioeconomic_value', data=vitamin_a_data, markers=True, dashes=False)
+ax = sns.lineplot(x='year', y='Vitamin_A', hue='socioeconomic_group', style='socioeconomic_value', data=vitamin_a_data, markers=True, dashes=False)
 plt.title('Change in Vitamin A Over Time in India')
 plt.ylabel('Vitamin A (%)')
 plt.xticks(rotation=45)
 plt.legend(title='Socioeconomic Group')
+# Set y-axis limits
+plt.ylim(vitamin_a_data['Vitamin_A'].min(), vitamin_a_data['Vitamin_A'].max())
 plt.show()
+
 
 
 
