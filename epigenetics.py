@@ -691,170 +691,104 @@ plt.show()
 
 
 
-
-    # Function to add data labels to the bar plots
+# Function to add data labels to the bar plots
 def add_labels(ax):
     for p in ax.patches:
         height = p.get_height()
-        ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
+        if p.get_x() + p.get_width() / 2. in ax.get_xticks():
+            if int(p.get_x() + p.get_width() / 2.) == 2025:
+                ax.annotate(f'{height:.1f} (Prediction)', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='red', xytext=(0, 5), textcoords='offset points')
+            else:
+                ax.annotate(f'{height:.1f}', (p.get_x() + p.get_width() / 2., height), ha='center', va='center', fontsize=9, color='black', xytext=(0, 5), textcoords='offset points')
 
 # Read the data
 region_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Region Adult.csv'
 region_data = pd.read_csv(region_path)
 
 # Filter data for Southern Asia
-southern_asia_data = region_data[region_data['region'] == 'Southern Asia']
+southern_asia_data = region_data[region_data['region'] == 'Southern Asia'].copy()
 
 # Rename columns for clarity
 southern_asia_data.rename(columns={'disagg.value': 'gender'}, inplace=True)
 
-# Melt the data for Adult Obesity
-obesity_cols = [col for col in southern_asia_data.columns if 'adult_obesity_' in col]
-obesity_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=obesity_cols, var_name='year', value_name='Adult_Obesity')
-obesity_data['year'] = obesity_data['year'].str.replace('adult_obesity_', '').astype(int)
+# Function to prepare data for regression
+def prepare_data(df, value_col):
+    df = df[['year', 'gender', value_col]].dropna()
+    df = df[df[value_col].apply(lambda x: isinstance(x, (int, float)))]
+    return df
 
-# Plotting the overall changes in Adult Obesity
-plt.figure(figsize=(14, 8))
+# Function to train the model and make predictions
+def predict_future(data, target_col, future_year):
+    X = data[['year']]
+    y = data[target_col]
+    
+    model = LinearRegression()
+    model.fit(X, y)
+    
+    future_X = np.array([[future_year]])
+    prediction = model.predict(future_X)
+    
+    return prediction[0]
 
-# Overall changes in Adult Obesity for Males
-plt.subplot(2, 1, 1)
-male_data = obesity_data[obesity_data['gender'] == 'Male']
-ax = sns.barplot(x='year', y='Adult_Obesity', data=male_data, ci=None)
-add_labels(ax)
-plt.title('Adult Obesity in Southern Asia (Male)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Obesity (%)')
+# Function to melt data and make predictions for a given metric
+def melt_and_predict(data, value_prefix, future_year):
+    cols = [col for col in data.columns if value_prefix in col]
+    melted_data = data.melt(id_vars=['region', 'gender'], value_vars=cols, var_name='year', value_name=value_prefix)
+    melted_data['year'] = melted_data['year'].str.replace(value_prefix, '').astype(int)
+    
+    male_data = prepare_data(melted_data[melted_data['gender'] == 'Male'], value_prefix)
+    female_data = prepare_data(melted_data[melted_data['gender'] == 'Female'], value_prefix)
+    
+    male_prediction = predict_future(male_data, value_prefix, future_year)
+    female_prediction = predict_future(female_data, value_prefix, future_year)
+    
+    male_data = pd.concat([male_data, pd.DataFrame({'year': [future_year], 'gender': ['Male'], value_prefix: [male_prediction]})], ignore_index=True)
+    female_data = pd.concat([female_data, pd.DataFrame({'year': [future_year], 'gender': ['Female'], value_prefix: [female_prediction]})], ignore_index=True)
+    
+    return male_data, female_data
 
-# Overall changes in Adult Obesity for Females
-plt.subplot(2, 1, 2)
-female_data = obesity_data[obesity_data['gender'] == 'Female']
-ax = sns.barplot(x='year', y='Adult_Obesity', data=female_data, ci=None)
-add_labels(ax)
-plt.title('Adult Obesity in Southern Asia (Female)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Obesity (%)')
+# Function to plot data
+def plot_data(male_data, female_data, title_prefix):
+    plt.figure(figsize=(14, 8))
 
-plt.tight_layout()
-plt.show()
+    # Overall changes for Males
+    plt.subplot(2, 1, 1)
+    ax = sns.barplot(x='year', y=male_data.columns[-1], data=male_data, ci=None)
+    add_labels(ax)
+    plt.title(f'{title_prefix} in Southern Asia (Male)')
+    plt.xticks(rotation=90)
+    plt.ylabel(f'{title_prefix} (%)')
 
-# Melt the data for Adult Overweight
-overweight_cols = [col for col in southern_asia_data.columns if 'adult_overweight_' in col]
-overweight_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=overweight_cols, var_name='year', value_name='Adult_Overweight')
-overweight_data['year'] = overweight_data['year'].str.replace('adult_overweight_', '').astype(int)
+    # Overall changes for Females
+    plt.subplot(2, 1, 2)
+    ax = sns.barplot(x='year', y=female_data.columns[-1], data=female_data, ci=None)
+    add_labels(ax)
+    plt.title(f'{title_prefix} in Southern Asia (Female)')
+    plt.xticks(rotation=90)
+    plt.ylabel(f'{title_prefix} (%)')
 
+    plt.tight_layout()
+    plt.show()
 
-# Plotting the overall changes in Adult Overweight
-plt.figure(figsize=(14, 8))
+# Define the future year for predictions
+future_year = 2025
 
-# Overall changes in Adult Overweight for Males
-plt.subplot(2, 1, 1)
-male_data = overweight_data[overweight_data['gender'] == 'Male']
-ax = sns.barplot(x='year', y='Adult_Overweight', data=male_data, ci=None)
-add_labels(ax)
-plt.title('Adult Overweight in Southern Asia (Male)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Overweight (%)')
+# Adult Obesity
+male_obesity_data, female_obesity_data = melt_and_predict(southern_asia_data, 'adult_obesity_', future_year)
+plot_data(male_obesity_data, female_obesity_data, 'Adult Obesity')
 
-# Overall changes in Adult Overweight for Females
-plt.subplot(2, 1, 2)
-female_data = overweight_data[overweight_data['gender'] == 'Female']
-ax = sns.barplot(x='year', y='Adult_Overweight', data=female_data, ci=None)
-add_labels(ax)
-plt.title('Adult Overweight in Southern Asia (Female)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Overweight (%)')
+# Adult Overweight
+male_overweight_data, female_overweight_data = melt_and_predict(southern_asia_data, 'adult_overweight_', future_year)
+plot_data(male_overweight_data, female_overweight_data, 'Adult Overweight')
 
-plt.tight_layout()
-plt.show()
+# Adult Underweight
+male_underweight_data, female_underweight_data = melt_and_predict(southern_asia_data, 'adult_underweight_', future_year)
+plot_data(male_underweight_data, female_underweight_data, 'Adult Underweight')
 
-# Melt the data for Adult Underweight
-underweight_cols = [col for col in southern_asia_data.columns if 'adult_underweight_' in col]
-underweight_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=underweight_cols, var_name='year', value_name='Adult_Underweight')
-underweight_data['year'] = underweight_data['year'].str.replace('adult_underweight_', '').astype(int)
+# Adult Blood Pressure
+male_blood_pressure_data, female_blood_pressure_data = melt_and_predict(southern_asia_data, 'adult_blood_pressure_', future_year)
+plot_data(male_blood_pressure_data, female_blood_pressure_data, 'Adult Blood Pressure')
 
-
-# Plotting the overall changes in Adult Underweight
-plt.figure(figsize=(14, 8))
-
-# Overall changes in Adult Underweight for Males
-plt.subplot(2, 1, 1)
-male_data = underweight_data[underweight_data['gender'] == 'Male']
-ax = sns.barplot(x='year', y='Adult_Underweight', data=male_data, ci=None)
-add_labels(ax)
-plt.title('Adult Underweight in Southern Asia (Male)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Underweight (%)')
-
-# Overall changes in Adult Underweight for Females
-plt.subplot(2, 1, 2)
-female_data = underweight_data[underweight_data['gender'] == 'Female']
-ax = sns.barplot(x='year', y='Adult_Underweight', data=female_data, ci=None)
-add_labels(ax)
-plt.title('Adult Underweight in Southern Asia (Female)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Underweight (%)')
-
-plt.tight_layout()
-plt.show()
-
-# Melt the data for Adult Blood Pressure
-blood_pressure_cols = [col for col in southern_asia_data.columns if 'adult_blood_pressure_' in col]
-blood_pressure_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=blood_pressure_cols, var_name='year', value_name='Adult_Blood_Pressure')
-blood_pressure_data['year'] = blood_pressure_data['year'].str.replace('adult_blood_pressure_', '').astype(int)
-
-
-# Plotting the overall changes in Adult Blood Pressure
-plt.figure(figsize=(14, 8))
-
-# Overall changes in Adult Blood Pressure for Males
-plt.subplot(2, 1, 1)
-male_data = blood_pressure_data[blood_pressure_data['gender'] == 'Male']
-ax = sns.barplot(x='year', y='Adult_Blood_Pressure', data=male_data, ci=None)
-add_labels(ax)
-plt.title('Adult Blood Pressure in Southern Asia (Male)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Blood Pressure (%)')
-
-# Overall changes in Adult Underweight for Females
-plt.subplot(2, 1, 2)
-female_data = blood_pressure_data[blood_pressure_data['gender'] == 'Female']
-ax = sns.barplot(x='year', y='Adult_Blood_Pressure', data=female_data, ci=None)
-add_labels(ax)
-plt.title('Adult Blood Pressure in Southern Asia (Female)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Blood Pressure (%)')
-
-plt.tight_layout()
-plt.show()
-
-
-
-# Melt the data for Adult Diabetes
-diabetes_cols = [col for col in southern_asia_data.columns if 'adult_diabetes_' in col]
-diabetes_data = southern_asia_data.melt(id_vars=['region', 'gender'], value_vars=diabetes_cols, var_name='year', value_name='Adult_Diabetes')
-diabetes_data['year'] = diabetes_data['year'].str.replace('adult_diabetes_', '').astype(int)
-
-
-# Plotting the overall changes in Adult Diabetes
-plt.figure(figsize=(14, 8))
-
-# Overall changes in Adult Diabetes for Males
-plt.subplot(2, 1, 1)
-male_data = diabetes_data[diabetes_data['gender'] == 'Male']
-ax = sns.barplot(x='year', y='Adult_Diabetes', data=male_data, ci=None)
-add_labels(ax)
-plt.title('Adult Diabetes in Southern Asia (Male)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Diabetes (%)')
-
-# Overall changes in Adult Diabetes for Females
-plt.subplot(2, 1, 2)
-female_data = diabetes_data[diabetes_data['gender'] == 'Female']
-ax = sns.barplot(x='year', y='Adult_Diabetes', data=female_data, ci=None)
-add_labels(ax)
-plt.title('Adult Diabetes in Southern Asia (Female)')
-plt.xticks(rotation=90)
-plt.ylabel('Adult Diabetes (%)')
-
-plt.tight_layout()
-plt.show()
+# Adult Diabetes
+male_diabetes_data, female_diabetes_data = melt_and_predict(southern_asia_data, 'adult_diabetes_', future_year)
+plot_data(male_diabetes_data, female_diabetes_data, 'Adult Diabetes')
