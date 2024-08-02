@@ -13,7 +13,6 @@ life_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/Life Expect
 dietary_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Dietary Needs.csv'
 inter_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(5)/Country Intervention.csv'
 
-
 iq_data = pd.read_csv(iq_data_path)
 nutri_data = pd.read_csv(nutri_path)
 risk_factors_data = pd.read_csv(risk_factors_path)
@@ -829,3 +828,58 @@ plt.xlabel('Region/Group')
 plt.legend(title='Gender')
 plt.tight_layout()
 plt.show()
+
+
+# Load the dataset
+pollution_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/global air pollution dataset.csv'
+data = pd.read_csv(pollution_path)
+
+# Filter data for India
+india_data = data[data['Country'] == 'India']
+
+# Function to plot histograms for different AQI values
+def plot_histogram(data, column, title):
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data[column], bins=30, kde=True)
+    plt.title(f'Distribution of {title} in India')
+    plt.xlabel(f'{title} Value')
+    plt.ylabel('Frequency')
+    plt.show()
+
+# Plot histograms for different AQI values
+plot_histogram(india_data, 'AQI Value', 'AQI')
+plot_histogram(india_data, 'CO AQI Value', 'CO AQI')
+plot_histogram(india_data, 'Ozone AQI Value', 'Ozone AQI')
+plot_histogram(india_data, 'NO2 AQI Value', 'NO2 AQI')
+plot_histogram(india_data, 'PM2.5 AQI Value', 'PM2.5 AQI')
+
+
+# Define a function to plot the number of cities in each AQI category
+def plot_aqi_categories(data, value_col, category_col, title):
+    aqi_categories = data.groupby(['Country', category_col]).size().reset_index(name='City Count')
+    aqi_categories = aqi_categories[aqi_categories[category_col].isin(['Very Unhealthy', 'Unhealthy', 'Unhealthy for Sensitive Groups'])]
+    
+    plt.figure(figsize=(14, 8))
+    sns.barplot(x='Country', y='City Count', hue=category_col, data=aqi_categories)
+    plt.title(f'Number of Cities in Each {title} Category by Country')
+    plt.xlabel('Country')
+    plt.ylabel('Number of Cities')
+    plt.xticks(rotation=90)
+    plt.legend(title=f'{title} Category')
+    plt.tight_layout()
+    plt.show()
+
+# Plot for overall AQI categories
+plot_aqi_categories(data, 'AQI Value', 'AQI Category', 'AQI')
+
+# Plot for CO AQI categories
+plot_aqi_categories(data, 'CO AQI Value', 'CO AQI Category', 'CO AQI')
+
+# Plot for Ozone AQI categories
+plot_aqi_categories(data, 'Ozone AQI Value', 'Ozone AQI Category', 'Ozone AQI')
+
+# Plot for NO2 AQI categories
+plot_aqi_categories(data, 'NO2 AQI Value', 'NO2 AQI Category', 'NO2 AQI')
+
+# Plot for PM2.5 AQI categories
+plot_aqi_categories(data, 'PM2.5 AQI Value', 'PM2.5 AQI Category', 'PM2.5 AQI')
