@@ -2,7 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LinearRegression
+import geopandas as gpd
 import numpy as np
+from scipy.stats import linregress
 
 # Load the data
 iq_data_path = '/Users/jayanth/Desktop/Personal Projects/Nutrition/archive(8)/avgIQpercountry.csv'
@@ -883,3 +885,97 @@ plot_aqi_categories(data, 'NO2 AQI Value', 'NO2 AQI Category', 'NO2 AQI')
 
 # Plot for PM2.5 AQI categories
 plot_aqi_categories(data, 'PM2.5 AQI Value', 'PM2.5 AQI Category', 'PM2.5 AQI')
+
+
+
+# Load the UV data
+uv_data = pd.read_csv('/Users/jayanth/Desktop/Personal Projects/Nutrition/uv-county.csv')
+
+# Inspect columns
+print(uv_data.columns)
+
+# Rename columns for consistency
+uv_data.rename(columns={'STATENAME': 'State', 'UV_ Wh/m_': 'UV_Wh_per_m2'}, inplace=True)
+
+# Group by state and calculate the mean UV levels
+state_uv_avg = uv_data.groupby('State')['UV_Wh_per_m2'].mean().reset_index()
+
+# Sort the states by the average UV levels for better visualization
+state_uv_avg.sort_values(by='UV_Wh_per_m2', ascending=False, inplace=True)
+
+# Plotting the bar graph
+plt.figure(figsize=(15, 10))
+plt.bar(state_uv_avg['State'], state_uv_avg['UV_Wh_per_m2'], color='skyblue')
+plt.xlabel('State')
+plt.ylabel('Average UV Wh/m^2')
+plt.title('Average UV Levels by State')
+plt.xticks(rotation=90)
+plt.tight_layout()
+
+# Add a legend
+plt.legend(['Average UV Wh/m^2'], loc='upper right')
+
+# Show the plot
+plt.show()
+
+
+
+
+# Load the UV data
+uv_data = pd.read_csv('/Users/jayanth/Desktop/Personal Projects/Nutrition/uv-county.csv')
+
+# Load the height data
+height_data = pd.read_excel('/Users/jayanth/Desktop/Personal Projects/Nutrition/heightus.xlsx')
+
+# Calculate the average UV levels for each state
+avg_uv_data = uv_data.groupby('STATENAME')['UV_ Wh/m_'].mean().reset_index()
+avg_uv_data.rename(columns={'STATENAME': 'State', 'UV_ Wh/m_': 'Avg_UV'}, inplace=True)
+
+# Merge the UV data with the height data
+merged_data = pd.merge(height_data, avg_uv_data, on='State')
+
+# Function to calculate and display r and r^2 values
+def plot_with_regression(ax, x, y, title, xlabel, ylabel):
+    ax.scatter(merged_data[x], merged_data[y])
+
+    # Fit linear model
+    X = merged_data[[x]]
+    y_values = merged_data[y]
+    model = LinearRegression().fit(X, y_values)
+    r_squared = model.score(X, y_values)
+    correlation_coefficient = np.sqrt(r_squared)
+    
+    # Regression line
+    line = model.predict(X)
+    ax.plot(merged_data[x], line, color='red')
+
+    # Display r and r^2 on the plot
+    ax.text(0.95, 0.05, f'r: {correlation_coefficient:.2f}\nr²: {r_squared:.2f}', 
+            ha='right', va='bottom', transform=ax.transAxes, fontsize=12, 
+            bbox=dict(facecolor='white', alpha=0.6))
+    
+    # Set titles and labels
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+# Create scatter plots
+fig, axes = plt.subplots(3, 1, figsize=(10, 18))
+
+# Scatter plot for average height
+plot_with_regression(axes[0], 'Avg_UV', 'Average Height', 
+                     'Average Height vs. UV Levels', 'Average UV Levels', 'Average Height (inches)')
+
+# Scatter plot for average male height
+plot_with_regression(axes[1], 'Avg_UV', 'Average Height for Male', 
+                     'Average Male Height vs. UV Levels', 'Average UV Levels', 'Average Male Height (inches)')
+
+# Scatter plot for average female height
+plot_with_regression(axes[2], 'Avg_UV', 'Average Height for Female', 
+                     'Average Female Height vs. UV Levels', 'Average UV Levels', 'Average Female Height (inches)')
+
+# Adjust layout
+plt.tight_layout()
+
+# Show the plot
+plt.show()
