@@ -935,7 +935,8 @@ avg_uv_data.rename(columns={'STATENAME': 'State', 'UV_ Wh/m_': 'Avg_UV'}, inplac
 merged_data = pd.merge(height_data, avg_uv_data, on='State')
 
 # Function to calculate and display r and r^2 values
-def plot_with_regression(ax, x, y, title, xlabel, ylabel):
+def plot_with_regression(x, y, title, xlabel, ylabel):
+    fig, ax = plt.subplots(figsize=(10, 6))
     ax.scatter(merged_data[x], merged_data[y])
 
     # Fit linear model
@@ -959,23 +960,15 @@ def plot_with_regression(ax, x, y, title, xlabel, ylabel):
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
 
-# Create scatter plots
-fig, axes = plt.subplots(3, 1, figsize=(10, 18))
+    # Show the plot
+    plt.show()
 
-# Scatter plot for average height
-plot_with_regression(axes[0], 'Avg_UV', 'Average Height', 
-                     'Average Height vs. UV Levels', 'Average UV Levels', 'Average Height (inches)')
+# Create scatter plots separately
+plot_with_regression('Avg_UV', 'Average Height', 
+                     'Average Height vs. UV Levels', 'Average UV Levels (Wh/m)', 'Average Height (inches)')
 
-# Scatter plot for average male height
-plot_with_regression(axes[1], 'Avg_UV', 'Average Height for Male', 
-                     'Average Male Height vs. UV Levels', 'Average UV Levels', 'Average Male Height (inches)')
+plot_with_regression('Avg_UV', 'Average Height for Male', 
+                     'Average Male Height vs. UV Levels', 'Average UV Levels (Wh/m)', 'Average Male Height (inches)')
 
-# Scatter plot for average female height
-plot_with_regression(axes[2], 'Avg_UV', 'Average Height for Female', 
-                     'Average Female Height vs. UV Levels', 'Average UV Levels', 'Average Female Height (inches)')
-
-# Adjust layout
-plt.tight_layout()
-
-# Show the plot
-plt.show()
+plot_with_regression('Avg_UV', 'Average Height for Female', 
+                     'Average Female Height vs. UV Levels', 'Average UV Levels (Wh/m)', 'Average Female Height (inches)')
