@@ -4,3 +4,5 @@ Advanced statistical methods and machine learning techniques were employed to ga
 
 Data-driven insights were synthesized within Jupyter Notebook using Python libraries such as pandas, matplotlib, seaborn, scikit-learn, and numpy. The project also examined the effects of environmental factors like pollution and UV radiation, as well as socio-economic influences on epigenetic outcomes. The findings offer actionable public health strategies based on the analysis.
 
+The following link can be used to visually view this notebook: https://nbviewer.org/github/jayvenn21/epigenetics/blob/main/epinote.ipynb
+
